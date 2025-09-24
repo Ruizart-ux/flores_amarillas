@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>De mi para ti</title>
+    <style>
+        /* ===== RESET Y BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        /* ===== INTERFACES ===== */
+        .initial-interface, .drawing-interface {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .initial-interface {
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .initial-interface.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.9);
+        }
+        .drawing-interface {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: #000;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+        .drawing-interface.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        /* ===== CANVAS ===== */
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        #turtleCanvas {
+            border: none;
+            background: #000;
+            max-width: 100vw;
+            max-height: 100vh;
+        }
+
+        /* ===== BOTÓN ===== */
+        button {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 18px 45px;
+            margin: 30px 0;
+            background: linear-gradient(135deg, #FFA216, #FF8C00);
+            color: #fff;
+            border: none;
+            border-radius: 35px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            box-shadow: 0 6px 20px rgba(255, 162, 22, 0.4);
+        }
+        button:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(255, 162, 22, 0.5); }
+        button:active { transform: translateY(-1px); }
+
+        /* ===== CONTROL DE VELOCIDAD ===== */
+        .speed-control { display: flex; flex-direction: column; align-items: center; margin-top: 20px; }
+        .speed-label { font-weight: 400; font-size: 1rem; color: rgba(255,255,255,0.7); margin-bottom: 15px; }
+        .speed-slider {
+            width: 180px; height: 6px; border-radius: 3px;
+            background: rgba(255,255,255,0.2); outline: none; margin-bottom: 10px;
+        }
+        .speed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 20px; height: 20px; border-radius: 50%; background: #FFA216;
+            cursor: pointer; box-shadow: 0 2px 6px rgba(255,162,22,0.3);
+        }
+        .speed-slider::-moz-range-thumb {
+            width: 20px; height: 20px; border-radius: 50%; background: #FFA216;
+            cursor: pointer; border: none; box-shadow: 0 2px 6px rgba(255,162,22,0.3);
+        }
+        .speed-value { font-weight: 500; font-size: 1.2rem; color: #FFA216; }
+
+        /* ===== TEXTO DE MENSAJE ===== */
+        .claseMensaje {
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: 500;
+            font-size: 2rem;
+            color: #FFA216;
+            text-align: center;
+            opacity: 0;
+            z-index: 10;
+        }
+        .claseMensaje.visible {
+            opacity: 1;
+        }
+        .claseMensaje .letter {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: letterAppear 0.3s forwards;
+        }
+        @keyframes letterAppear { to { opacity: 1; transform: translateY(0); } }
+
+        /* ===== CREDITS ===== */
+        .credits {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: 400;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+            z-index: 1000;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; margin-bottom: 20px; }
+            button { font-size: 1rem; padding: 15px 30px; margin: 25px 0; }
+            .speed-slider { width: 150px; }
+            .speed-value { font-size: 1.1rem; }
+            #turtleCanvas { max-width: 95vw; max-height: 70vh; }
+            .claseMensaje { font-size: 1.5rem; top: 15%; }
+            .credits { font-size: 0.8rem; bottom: 15px; }
+        }
+        @media (max-width: 480px) {
+            h1 { font-size: 1.8rem; margin-bottom: 15px; }
+            button { font-size: 0.9rem; padding: 12px 25px; margin: 20px 0; }
+            .speed-slider { width: 120px; }
+            .speed-value { font-size: 1rem; }
+            .claseMensaje { font-size: 1.3rem; top: 20%; }
+            .credits { font-size: 0.75rem; bottom: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== INTERFAZ INICIAL ===== -->
+    <div class="initial-interface" id="initialInterface">
+        <h1>Para ti </h1>
+        <h1>🌻</h1>
+        <button id="startButton">DIBUJAR :)</button>
+        <div class="speed-control">
+            <div class="speed-label">Velocidad:</div>
+            <input type="range" class="speed-slider" id="speedSlider" min="1" max="10" value="5">
+            <div class="speed-value" id="speedValue">5</div>
+        </div>
+    </div>
+
+    <!-- ===== INTERFAZ DE DIBUJO ===== -->
+    <div class="drawing-interface" id="drawingInterface">
+        <div class="canvas-container">
+            <canvas id="turtleCanvas" width="1000" height="1000"></canvas>
+        </div>
+        <div class="claseMensaje" id="mensaje"></div>
+    </div>
+
+    <!-- ===== CREDITS ===== -->
+    <div class="credits">Al menos unas flores amarillas asi</div>
+
+    <!-- ===== SCRIPT ===== -->
+    <script>
+        let drawingActive = false, currentPetal = 0, currentSegment = 0, drawingInterval = null, drawingSpeed = 5;
+        const canvas = document.getElementById('turtleCanvas'), ctx = canvas.getContext('2d');
+        let turtleX = canvas.width/2, turtleY = canvas.height/2, turtleHeading = 0, turtlePenDown = true;
+
+        const bgm = document.getElementById('bgm');
+
+        function clearCanvas() {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle='black'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        }
+        function setColor(colorStr){ctx.strokeStyle=colorStr; ctx.fillStyle=colorStr; ctx.lineWidth=3;}
+        function penUp(){turtlePenDown=false;} function penDown(){turtlePenDown=true;}
+        function right(angle){turtleHeading-=angle;} function left(angle){turtleHeading+=angle;}
+        function circle(radius, extent=360){
+            const centerAngle=turtleHeading+90;
+            const centerX=turtleX+radius*Math.cos(centerAngle*Math.PI/180);
+            const centerY=turtleY+radius*Math.sin(centerAngle*Math.PI/180);
+            const startAngleRad=(turtleHeading-90)*Math.PI/180;
+            const endAngleRad=startAngleRad+extent*Math.PI/180;
+            ctx.beginPath(); ctx.arc(centerX,centerY,radius,startAngleRad,endAngleRad); ctx.stroke();
+            turtleX=centerX+radius*Math.cos(endAngleRad);
+            turtleY=centerY+radius*Math.sin(endAngleRad);
+            turtleHeading+=extent;
+        }
+
+        function drawNext(){
+            if(!drawingActive){clearInterval(drawingInterval); return;}
+            if(currentPetal >= 16) { drawingActive = false; showMensaje(); return; }
+            if(currentSegment>=18){setColor('#FFA216'); circle(40,24); currentPetal++; currentSegment=0; return;}
+            setColor('#FFA216'); right(90); circle(150-currentSegment*6,90); left(90); circle(150-currentSegment*6,90); right(180);
+            currentSegment++;
+        }
+
+        function startDrawing(){
+            if(drawingInterval) clearInterval(drawingInterval);
+            const speedSlider=document.getElementById('speedSlider');
+            drawingSpeed=parseInt(speedSlider.value,10);
+            const initialInterface=document.getElementById('initialInterface');
+            const drawingInterface=document.getElementById('drawingInterface');
+            initialInterface.classList.add('hidden');
+            setTimeout(()=>{drawingInterface.classList.add('active');},400);
+            drawingActive=true; currentPetal=0; currentSegment=0; clearCanvas();
+
+            // ===== REPRODUCIR AUDIO =====
+            bgm.currentTime=0;
+            bgm.play().catch(err=>console.log("Audio bloqueado por el navegador:", err));
+
+            setTimeout(()=>{const delay=Math.max(10,100-(drawingSpeed*9)); drawingInterval=setInterval(drawNext,delay);},800);
+        }
+
+        function showMensaje(){
+    const mensajeElement = document.getElementById('mensaje');
+    mensajeElement.classList.add('visible');
+    const text = "Con_amor_de_tu_inge_sobrepensador_colorado ;)";
+    mensajeElement.innerHTML = "";
+    for(let i = 0; i < text.length; i++){
+        const char = text[i]; 
+        const span = document.createElement('span');
+        span.classList.add('letter'); 
+        span.textContent = char === " " ? " " : char;
+        span.style.animationDelay = `${i * 0.05}s`;
+        mensajeElement.appendChild(span);
+    }
+}
+
+
+        function updateSpeedDisplay(){
+            const speedSlider=document.getElementById('speedSlider');
+            const speedValue=document.getElementById('speedValue');
+            speedValue.textContent=speedSlider.value;
+        }
+
+        document.addEventListener('DOMContentLoaded',()=>{
+            document.getElementById('speedSlider').addEventListener('input',updateSpeedDisplay);
+            document.getElementById('startButton').addEventListener('click',startDrawing);
+            updateSpeedDisplay();
+        });
+    </script>
+</body>
+</html>
