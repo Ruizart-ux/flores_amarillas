@@ -75,23 +75,29 @@
         const canvas = document.getElementById('turtleCanvas');
         const ctx = canvas.getContext('2d');
         const width = canvas.width, height = canvas.height;
-        const centerX = width/2, centerY = height/2;
         let drawingActive=false, currentFlower=0, currentPetal=0, drawingInterval=null, drawingSpeed=5;
+
+        // Posiciones de las 3 flores
+        const flowers = [
+            {x: width/3, y: height/2},
+            {x: width/2, y: height/3},
+            {x: 2*width/3, y: 2*height/3}
+        ];
 
         function clearCanvas(){
             ctx.fillStyle='black';
             ctx.fillRect(0,0,width,height);
         }
 
-        function setColor(color){ ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=3; }
+        function setColor(color){ ctx.strokeStyle=color; ctx.lineWidth=3; }
 
-        function drawPetal(radius=50, angle=60){
+        function drawPetal(cx, cy, radius=50, angle=60){
             ctx.beginPath();
-            ctx.moveTo(centerX, centerY);
+            ctx.moveTo(cx, cy);
             for(let a=0; a<=angle; a+=1){
                 const rad = a * Math.PI/180;
-                const x = centerX + radius*Math.cos(rad);
-                const y = centerY + radius*Math.sin(rad);
+                const x = cx + radius*Math.cos(rad);
+                const y = cy + radius*Math.sin(rad);
                 ctx.lineTo(x,y);
             }
             ctx.stroke();
@@ -99,28 +105,27 @@
 
         function drawNext(){
             if(!drawingActive){ clearInterval(drawingInterval); return; }
+            if(currentFlower>=flowers.length){ drawingActive=false; showMensaje(); return; }
 
-            if(currentFlower>=3){ drawingActive=false; showMensaje(); return; } // 3 flores
-
+            const flower = flowers[currentFlower];
             const rotation = currentPetal * (360/16);
             ctx.save();
-            ctx.translate(centerX, centerY);
+            ctx.translate(flower.x, flower.y);
             ctx.rotate(rotation*Math.PI/180);
-            ctx.translate(-centerX, -centerY);
+            ctx.translate(-flower.x, -flower.y);
             setColor('#FFA216');
-            drawPetal(100,60);
+            drawPetal(flower.x, flower.y, 80, 60);
             ctx.restore();
 
             currentPetal++;
-            if(currentPetal>=16){ // flor completa
+            if(currentPetal>=16){
                 currentPetal=0;
                 currentFlower++;
             }
         }
 
         function startDrawing(){
-            const speedSlider=document.getElementById('speedSlider');
-            drawingSpeed=parseInt(speedSlider.value,10);
+            drawingSpeed=parseInt(document.getElementById('speedSlider').value,10);
             document.getElementById('initialInterface').classList.add('hidden');
             setTimeout(()=>{document.getElementById('drawingInterface').classList.add('active');},400);
             clearCanvas();
@@ -134,7 +139,7 @@
         function showMensaje(){
             const mensajeElement=document.getElementById('mensaje');
             mensajeElement.classList.add('visible');
-            const text="Con_amor_de_tu_inge_sobrepensador_colorado ;)";
+            const text="Siempre estando para ti";
             mensajeElement.innerHTML="";
             for(let i=0;i<text.length;i++){
                 const char=text[i];
@@ -158,4 +163,5 @@
     </script>
 </body>
 </html>
+
 
