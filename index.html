@@ -69,31 +69,27 @@
         <div class="claseMensaje" id="mensaje"></div>
     </div>
 
-    <audio id="bgm" preload="auto" loop>
-        <source src="audio/Floricienta-Flores-Amarillas-Audio.mp3" type="audio/mpeg">
-    </audio>
-
     <div class="credits">Al menos unas flores amarillas así</div>
 
     <script>
-        let drawingActive=false, currentPetal=0, drawingInterval=null, drawingSpeed=5;
-        const canvas=document.getElementById('turtleCanvas'), ctx=canvas.getContext('2d');
-        const centerX = canvas.width/2, centerY = canvas.height/2;
-        const bgm=document.getElementById('bgm');
+        const canvas = document.getElementById('turtleCanvas');
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width, height = canvas.height;
+        const centerX = width/2, centerY = height/2;
+        let drawingActive=false, currentFlower=0, currentPetal=0, drawingInterval=null, drawingSpeed=5;
 
         function clearCanvas(){
-            ctx.clearRect(0,0,canvas.width,canvas.height);
             ctx.fillStyle='black';
-            ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.fillRect(0,0,width,height);
         }
 
-        function setColor(color){ ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=3;}
+        function setColor(color){ ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=3; }
 
-        function drawPetal(radius=40, angle=60){
+        function drawPetal(radius=50, angle=60){
             ctx.beginPath();
             ctx.moveTo(centerX, centerY);
             for(let a=0; a<=angle; a+=1){
-                const rad = (a*(Math.PI/180));
+                const rad = a * Math.PI/180;
                 const x = centerX + radius*Math.cos(rad);
                 const y = centerY + radius*Math.sin(rad);
                 ctx.lineTo(x,y);
@@ -103,18 +99,23 @@
 
         function drawNext(){
             if(!drawingActive){ clearInterval(drawingInterval); return; }
-            if(currentPetal>=16){ drawingActive=false; showMensaje(); return; }
 
-            const rotation = currentPetal*(360/16);
+            if(currentFlower>=3){ drawingActive=false; showMensaje(); return; } // 3 flores
+
+            const rotation = currentPetal * (360/16);
             ctx.save();
             ctx.translate(centerX, centerY);
             ctx.rotate(rotation*Math.PI/180);
-            ctx.translate(-centerX,-centerY);
+            ctx.translate(-centerX, -centerY);
             setColor('#FFA216');
             drawPetal(100,60);
             ctx.restore();
 
             currentPetal++;
+            if(currentPetal>=16){ // flor completa
+                currentPetal=0;
+                currentFlower++;
+            }
         }
 
         function startDrawing(){
@@ -124,13 +125,10 @@
             setTimeout(()=>{document.getElementById('drawingInterface').classList.add('active');},400);
             clearCanvas();
             drawingActive=true;
+            currentFlower=0;
             currentPetal=0;
-
-            bgm.currentTime=0;
-            bgm.play().catch(err=>console.log("Audio bloqueado:",err));
-
-            const delay=Math.max(10,100-(drawingSpeed*9));
-            drawingInterval=setInterval(drawNext,delay);
+            const delay = Math.max(10,100-(drawingSpeed*9));
+            drawingInterval = setInterval(drawNext, delay);
         }
 
         function showMensaje(){
@@ -152,7 +150,7 @@
             document.getElementById('speedValue').textContent=document.getElementById('speedSlider').value;
         }
 
-        document.addEventListener('DOMContentLoaded',()=>{
+        document.addEventListener('DOMContentLoaded', ()=>{
             document.getElementById('speedSlider').addEventListener('input',updateSpeedDisplay);
             document.getElementById('startButton').addEventListener('click',startDrawing);
             updateSpeedDisplay();
@@ -160,3 +158,4 @@
     </script>
 </body>
 </html>
+
